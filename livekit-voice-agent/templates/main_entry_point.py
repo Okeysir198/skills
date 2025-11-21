@@ -8,9 +8,7 @@ It sets up the agent server, prewarming, and session management.
 import logging
 from dotenv import load_dotenv
 
-from livekit import rtc
 from livekit.agents import (
-    Agent,
     AgentSession,
     JobContext,
     JobProcess,

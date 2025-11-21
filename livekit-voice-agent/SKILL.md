@@ -150,9 +150,9 @@ your-agent-project/
 └── README.md
 ```
 
-**Load template files:**
-- [📁 Project Template](./templates/project_template/)
-- [🔧 Configuration Examples](./templates/configs/)
+**Use the quick start script or copy template files:**
+- See [⚡ Quick Start Script](./scripts/quickstart.sh) for automated setup
+- Or manually copy files from `./templates/` directory
 
 #### 2.2 Initialize Project
 
@@ -858,25 +858,29 @@ RouterAgent ─┬→ TechnicalAgent
 
 ---
 
-## Examples
+## Example Use Cases
 
-### Example 1: Restaurant Ordering Agent
+The templates and patterns in this skill support various use cases:
 
-**Load example:** [🍔 Restaurant Agent Example](./examples/restaurant_ordering/)
+### Restaurant Ordering Agent
 
-Flow: Welcome → Menu Navigation → Order Taking → Payment → Confirmation
+**Flow:** Welcome → Menu Navigation → Order Taking → Payment → Confirmation
 
-### Example 2: Technical Support Agent
+**Implementation:** Use Linear Pipeline pattern from [Multi-Agent Patterns](./reference/multi_agent_patterns.md) with the OrderData model from [shared_data.py](./templates/models/shared_data.py).
 
-**Load example:** [🛠️ Tech Support Example](./examples/tech_support/)
+### Technical Support Agent
 
-Flow: Greeting → Triage → Troubleshooting → Resolution/Escalation
+**Flow:** Greeting → Triage → Troubleshooting → Resolution/Escalation
 
-### Example 3: Appointment Booking Agent
+**Implementation:** Use Escalation Hierarchy pattern with the SupportTicket model. See the provided templates for intro, specialist, and escalation agents.
 
-**Load example:** [📅 Booking Agent Example](./examples/appointment_booking/)
+### Appointment Booking Agent
 
-Flow: Reception → Availability Check → Booking → Confirmation
+**Flow:** Reception → Availability Check → Booking → Confirmation
+
+**Implementation:** Use Linear Pipeline pattern. Customize ConversationData to track appointment details, availability, and booking confirmation.
+
+**Note:** The templates in `./templates/` provide a complete working implementation. Adapt the agents and data models to your specific use case.
 
 ---
 
@@ -902,7 +906,6 @@ Load these resources as needed:
 - [📋 Agent Best Practices](./reference/agent_best_practices.md)
 - [🏗️ Multi-Agent Patterns](./reference/multi_agent_patterns.md)
 - [🧪 Testing Guide](./reference/testing_guide.md)
-- [🐳 Deployment Guide](./reference/deployment_guide.md)
 
 #### Templates
 - [🚀 Main Entry Point](./templates/main_entry_point.py)
