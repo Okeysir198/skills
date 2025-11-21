@@ -287,12 +287,16 @@ class PaymentAgent(Agent):
 
 ```python
 class MyAgent(Agent):
-    async def on_enter(self, context: RunContext):
+    async def on_enter(self):
         """Initialize user data when agent starts."""
+        from datetime import datetime
+
+        # Access userdata through self.session
         # Set defaults if not already set
-        context.userdata.setdefault("session_start", time.time())
-        context.userdata.setdefault("interaction_count", 0)
-        context.userdata["interaction_count"] += 1
+        if "session_start" not in self.session.userdata:
+            self.session.userdata["session_start"] = datetime.now().isoformat()
+        self.session.userdata.setdefault("interaction_count", 0)
+        self.session.userdata["interaction_count"] += 1
 
         # Generate initial greeting
         await self.session.generate_reply()

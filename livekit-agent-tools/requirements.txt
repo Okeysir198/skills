@@ -1,0 +1,26 @@
+# LiveKit Agents Core
+livekit-agents>=0.8.0
+
+# LLM Plugins (OpenAI required for examples)
+livekit-plugins-openai>=0.6.0
+
+# Voice Activity Detection
+livekit-plugins-silero>=0.6.0
+
+# Environment Variables
+python-dotenv>=1.0.0
+
+# HTTP Client for API Integration Examples
+aiohttp>=3.9.0
+
+# Optional: Additional STT/TTS Providers
+# livekit-plugins-deepgram>=0.6.0
+# livekit-plugins-elevenlabs>=0.6.0
+# livekit-plugins-cartesia>=0.2.0
+
+# Optional: Anthropic LLM
+# livekit-plugins-anthropic>=0.6.0
+
+# Development Dependencies (optional)
+# pytest>=7.4.0
+# pytest-asyncio>=0.21.0

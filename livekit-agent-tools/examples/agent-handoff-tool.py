@@ -69,7 +69,7 @@ class GreeterAgent(Agent):
         self,
         name: str | None = None,
         email: str | None = None,
-        context: RunContext = None
+        context: RunContext
     ) -> str:
         """Collect customer information before routing.
 

@@ -90,7 +90,7 @@ class StatefulAgent(Agent):
         self,
         name: str | None = None,
         email: str | None = None,
-        context: RunContext = None
+        context: RunContext
     ) -> str:
         """Save or update user profile information.
 
@@ -165,7 +165,7 @@ class StatefulAgent(Agent):
         item_name: str,
         price: float,
         quantity: int = 1,
-        context: RunContext = None
+        context: RunContext
     ) -> str:
         """Add an item to the shopping cart.
 

@@ -38,15 +38,41 @@ class BasicToolAgent(Agent):
         """Perform a mathematical calculation.
 
         Use this when the user asks you to calculate, compute, or solve a math problem.
+        Supports basic arithmetic operations: +, -, *, /, **, ()
 
         Args:
             expression: Mathematical expression to evaluate (e.g., "2 + 2", "10 * 5")
         """
         try:
-            # Safely evaluate mathematical expressions
-            # WARNING: In production, use a proper math parser, not eval()
-            result = eval(expression, {"__builtins__": {}}, {})
+            import ast
+            import operator
+
+            # Safe mathematical operators
+            operators = {
+                ast.Add: operator.add,
+                ast.Sub: operator.sub,
+                ast.Mult: operator.mul,
+                ast.Div: operator.truediv,
+                ast.Pow: operator.pow,
+                ast.USub: operator.neg,
+            }
+
+            def eval_expr(node):
+                if isinstance(node, ast.Constant):  # <number>
+                    return node.value
+                elif isinstance(node, ast.BinOp):  # <left> <operator> <right>
+                    return operators[type(node.op)](eval_expr(node.left), eval_expr(node.right))
+                elif isinstance(node, ast.UnaryOp):  # <operator> <operand>
+                    return operators[type(node.op)](eval_expr(node.operand))
+                else:
+                    raise TypeError(f"Unsupported operation: {node}")
+
+            # Parse and evaluate safely
+            node = ast.parse(expression, mode='eval').body
+            result = eval_expr(node)
             return f"The result of {expression} is {result}"
+        except (SyntaxError, TypeError, KeyError):
+            return f"I can only calculate basic math expressions like '2 + 2' or '10 * 5'. Please use only numbers and operators: +, -, *, /, **, ()"
         except Exception as e:
             return f"I couldn't calculate '{expression}'. Please check the expression and try again."
 
