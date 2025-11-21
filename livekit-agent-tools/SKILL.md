@@ -285,6 +285,70 @@ Complete, runnable examples demonstrating each pattern:
 - **[examples/stateful-tool.py](./examples/stateful-tool.py)** - State management with RunContext
 - **[examples/agent-handoff-tool.py](./examples/agent-handoff-tool.py)** - Multi-agent coordination
 
+## Environment Setup
+
+Before running examples, create a `.env` file with required API keys:
+
+```bash
+# LiveKit Configuration
+LIVEKIT_URL=wss://your-project.livekit.cloud
+LIVEKIT_API_KEY=your_api_key
+LIVEKIT_API_SECRET=your_api_secret
+
+# LLM Provider (choose one)
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
+```
+
+Install dependencies:
+
+```bash
+pip install livekit-agents livekit-plugins-openai livekit-plugins-silero python-dotenv aiohttp
+```
+
+## Quick Reference
+
+| Pattern | When to Use | Key Features | Example |
+|---------|-------------|--------------|---------|
+| **Basic Tools** | Simple, fast operations | Direct return values, no state | `basic-tool.py` |
+| **API Integration** | External service calls | Async HTTP, error handling | `api-integration-tool.py` |
+| **Long-Running** | Time-consuming ops | Interruption support, cancellation | `long-running-tool.py` |
+| **Stateful** | Multi-step workflows | RunContext.userdata, persistence | `stateful-tool.py` |
+| **Multi-Agent** | Specialized routing | Agent handoffs, context transfer | `agent-handoff-tool.py` |
+| **Dynamic** | Runtime tool creation | Permission-based, conditional | See dynamic-tools.md |
+
+### Common Patterns Cheat Sheet
+
+```python
+# Basic tool
+@function_tool
+async def tool_name(self, param: str) -> str:
+    """Tool description with usage guidance."""
+    return result
+
+# With state
+@function_tool
+async def stateful_tool(self, param: str, context: RunContext) -> str:
+    context.userdata["key"] = value
+    return result
+
+# With interruption handling
+@function_tool
+async def long_tool(self, param: str, context: RunContext) -> str | None:
+    task = asyncio.ensure_future(operation())
+    await context.speech_handle.wait_if_not_interrupted([task])
+    if context.speech_handle.interrupted:
+        task.cancel()
+        return None
+    return task.result()
+
+# Agent handoff
+@function_tool
+async def transfer_agent(self, context: RunContext):
+    new_agent = SpecialistAgent()
+    return new_agent, "Transferring to specialist"
+```
+
 ## Quick Troubleshooting
 
 **Tool not being called**: Improve the description to be more specific about when to use it.
@@ -296,5 +360,7 @@ Complete, runnable examples demonstrating each pattern:
 **State not persisting**: Use `context.userdata` to share state across tool calls.
 
 **Agent transitions fail**: Return a tuple `(new_agent, message)` from the tool.
+
+**Import errors**: Verify all required packages are installed (`pip install livekit-agents livekit-plugins-openai`).
 
 For detailed guidance, consult the reference documentation above.
