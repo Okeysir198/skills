@@ -100,8 +100,19 @@ class STT(stt.STT):
         """
         session = await self._ensure_session()
 
-        # Convert audio buffer to bytes
-        audio_data = buffer.data.tobytes()
+        # Convert audio buffer to WAV format
+        import io
+        import wave
+
+        wav_io = io.BytesIO()
+        with wave.open(wav_io, 'wb') as wav_file:
+            wav_file.setnchannels(buffer.num_channels)
+            wav_file.setsampwidth(2)  # 16-bit audio
+            wav_file.setframerate(buffer.sample_rate)
+            wav_file.writeframes(buffer.data.tobytes())
+
+        wav_io.seek(0)
+        audio_data = wav_io.read()
 
         # Prepare form data
         form_data = aiohttp.FormData()
@@ -227,6 +238,24 @@ class SpeechStream(stt.SpeechStream):
 
         # State
         self._closed = False
+        self._main_task: Optional[asyncio.Task] = None
+
+    def __aiter__(self):
+        """Initialize async iteration and start the main task."""
+        return self
+
+    async def __anext__(self) -> stt.SpeechEvent:
+        """Get the next transcription event."""
+        # Start the main task on first iteration
+        if self._main_task is None:
+            self._main_task = asyncio.create_task(self._run())
+
+        event = await self._event_queue.get()
+
+        if event is None:
+            raise StopAsyncIteration
+
+        return event
 
     async def _run(self):
         """Main execution loop for the stream."""
@@ -340,7 +369,11 @@ class SpeechStream(stt.SpeechStream):
         if self._closed:
             return
 
-        asyncio.create_task(self._audio_queue.put(frame))
+        # Synchronously add frame to queue (do not create async task)
+        try:
+            self._audio_queue.put_nowait(frame)
+        except asyncio.QueueFull:
+            logger.warning("Audio queue is full, dropping frame")
 
     async def flush(self):
         """Flush any buffered audio."""
@@ -362,6 +395,12 @@ class SpeechStream(stt.SpeechStream):
         await self._audio_queue.put(None)
 
         # Cancel tasks
+        if self._main_task and not self._main_task.done():
+            self._main_task.cancel()
+            try:
+                await self._main_task
+            except asyncio.CancelledError:
+                pass
         if self._send_task and not self._send_task.done():
             self._send_task.cancel()
         if self._recv_task and not self._recv_task.done():
@@ -370,12 +409,3 @@ class SpeechStream(stt.SpeechStream):
         # Close WebSocket
         if self._ws:
             await self._ws.close()
-
-    async def __anext__(self) -> stt.SpeechEvent:
-        """Get the next transcription event."""
-        event = await self._event_queue.get()
-
-        if event is None:
-            raise StopAsyncIteration
-
-        return event

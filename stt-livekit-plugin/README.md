@@ -263,8 +263,24 @@ cd livekit-plugin-custom-stt/examples
 python basic_usage.py
 ```
 
+## 🧪 Testing
+
+Comprehensive integration tests are included:
+
+```bash
+# Run all tests
+./run_tests.sh
+
+# Or with pytest
+cd tests && pytest test_integration.py -v
+```
+
+All tests use **real data and real connections** (no mocks). See [TESTING.md](TESTING.md) for details.
+
 ## 📚 Documentation
 
+- [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup
+- [Testing Guide](TESTING.md) - Integration tests
 - [STT API Documentation](stt-api/README.md)
 - [LiveKit Plugin Documentation](livekit-plugin-custom-stt/README.md)
 - [LiveKit Agents Documentation](https://docs.livekit.io/agents/)
