@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  stt-api:
+    build: ./stt-api
+    container_name: stt-api
+    ports:
+      - "8000:8000"
+    environment:
+      # Model configuration
+      - WHISPER_MODEL_SIZE=base  # Options: tiny, base, small, medium, large-v2, large-v3
+      - WHISPER_DEVICE=cpu       # Options: cpu, cuda
+      - WHISPER_COMPUTE_TYPE=int8  # Options: int8, float16, float32
+    volumes:
+      # Cache models to avoid re-downloading
+      - whisper-models:/root/.cache/huggingface
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Uncomment this section if you want to run with GPU support
+  # stt-api-gpu:
+  #   build: ./stt-api
+  #   container_name: stt-api-gpu
+  #   ports:
+  #     - "8000:8000"
+  #   environment:
+  #     - WHISPER_MODEL_SIZE=medium
+  #     - WHISPER_DEVICE=cuda
+  #     - WHISPER_COMPUTE_TYPE=float16
+  #   volumes:
+  #     - whisper-models:/root/.cache/huggingface
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+  #   restart: unless-stopped
+
+volumes:
+  whisper-models:
+    driver: local

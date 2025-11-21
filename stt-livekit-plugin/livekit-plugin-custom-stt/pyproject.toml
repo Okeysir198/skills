@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "livekit-plugins-custom-stt"
+version = "1.0.0"
+description = "LiveKit plugin for custom self-hosted STT API using faster-whisper"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Custom STT Plugin", email = "dev@example.com"}
+]
+keywords = ["livekit", "stt", "speech-to-text", "whisper", "agents"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Sound/Audio :: Speech",
+]
+
+dependencies = [
+    "livekit-agents>=0.8.0",
+    "aiohttp>=3.9.0",
+    "websockets>=12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/yourusername/livekit-plugins-custom-stt"
+Documentation = "https://github.com/yourusername/livekit-plugins-custom-stt#readme"
+Repository = "https://github.com/yourusername/livekit-plugins-custom-stt"
+Issues = "https://github.com/yourusername/livekit-plugins-custom-stt/issues"
+
+[tool.setuptools]
+packages = ["livekit.plugins.custom_stt"]
+
+[tool.setuptools.package-dir]
+"livekit.plugins.custom_stt" = "livekit/plugins/custom_stt"

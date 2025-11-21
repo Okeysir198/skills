@@ -1,0 +1,7 @@
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+faster-whisper==1.1.0
+numpy==1.26.4
+soundfile==0.12.1
+python-multipart==0.0.20
+websockets==14.1
