@@ -377,8 +377,8 @@ async def entrypoint(ctx: agents.JobContext):
         vad=vad,
     )
 
-    # Start session with initial agent
-    session.start(ctx.room, initial_agent=greeter)
+    # Start session with greeter as the initial agent
+    await session.start(room=ctx.room, agent=greeter)
     await session.wait_for_complete()
 ```
 
@@ -386,25 +386,15 @@ async def entrypoint(ctx: agents.JobContext):
 
 ```python
 class BaseHandoffAgent(agents.Agent):
-    """Base class with handoff context preservation."""
+    """Base class with handoff capabilities."""
 
     async def on_enter(self, session: agents.AgentSession):
         """Called when agent takes control."""
-        context = session.context
-
-        # Preserve relevant history from previous agent
-        if context.userdata.prev_agent:
-            # Copy last N messages (excluding instructions)
-            prev_history = context.userdata.prev_agent.chat_history[-5:]
-            context.chat_history.extend(prev_history)
-
         # Announce transition
         await session.generate_reply("I'm here to help with your request.")
 
     def _transfer(self, context: RunContext, target_agent: agents.Agent, message: str):
         """Helper for agent handoff."""
-        user_data = context.userdata
-        user_data.prev_agent = context.session.current_agent
         return target_agent, message
 ```
 

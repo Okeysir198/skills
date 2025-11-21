@@ -50,29 +50,10 @@ class BaseAgent(Agent):
 
     async def on_enter(self, session: AgentSession):
         """Called when agent takes control."""
-        context = session.context
-
-        # Preserve context from previous agent
-        if context.userdata.prev_agent:
-            # Copy relevant history (last 5 messages)
-            prev_history = context.userdata.prev_agent.chat_history[-5:]
-            context.chat_history.extend(prev_history)
-
         logger.info(f"{self.__class__.__name__} entered session")
 
         # Generate greeting
         await session.generate_reply()
-
-    def _create_handoff_tool(self, target_agent_name: str, message: str):
-        """Helper to create a handoff function."""
-        @function_tool
-        async def transfer(context: RunContext):
-            f"""Transfer to {target_agent_name}."""
-            user_data = context.userdata
-            user_data.prev_agent = context.session.current_agent
-            return user_data.agents[target_agent_name], message
-
-        return transfer
 
 
 class GreeterAgent(BaseAgent):
@@ -94,7 +75,6 @@ class GreeterAgent(BaseAgent):
         """Transfer to technical support."""
         user_data = context.userdata
         user_data.request_type = "support"
-        user_data.prev_agent = context.session.current_agent
         return user_data.agents['support'], "Let me connect you with our technical support team."
 
     @function_tool
@@ -102,7 +82,6 @@ class GreeterAgent(BaseAgent):
         """Transfer to sales department."""
         user_data = context.userdata
         user_data.request_type = "sales"
-        user_data.prev_agent = context.session.current_agent
         return user_data.agents['sales'], "Connecting you with our sales team."
 
     @function_tool
@@ -110,7 +89,6 @@ class GreeterAgent(BaseAgent):
         """Transfer to billing department."""
         user_data = context.userdata
         user_data.request_type = "billing"
-        user_data.prev_agent = context.session.current_agent
         return user_data.agents['billing'], "I'll transfer you to our billing department."
 
 
@@ -161,7 +139,6 @@ class SupportAgent(BaseAgent):
     async def escalate_to_specialist(self, context: RunContext):
         """Escalate to a senior specialist."""
         user_data = context.userdata
-        user_data.prev_agent = context.session.current_agent
         user_data.current_task = "escalated"
         return user_data.agents['specialist'], "This issue requires our senior specialist. Transferring you now."
 
@@ -202,7 +179,6 @@ class SalesAgent(BaseAgent):
     async def transfer_to_billing(self, context: RunContext):
         """Transfer to billing to complete purchase."""
         user_data = context.userdata
-        user_data.prev_agent = context.session.current_agent
         return user_data.agents['billing'], "Let me transfer you to billing to complete your purchase."
 
 
@@ -337,7 +313,7 @@ async def entrypoint(ctx: JobContext):
 
     # Start with greeter agent
     logger.info("Starting session with greeter agent")
-    session.start(ctx.room, initial_agent=greeter)
+    await session.start(room=ctx.room, agent=greeter)
 
     # Wait for session to complete
     await session.wait_for_complete()

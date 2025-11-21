@@ -102,7 +102,7 @@ async def entrypoint(ctx: JobContext):
         turn_detection=turn_detector.MultilingualModel(languages=["en"]),
     )
 
-    session.start(ctx.room)
+    await session.start(room=ctx.room, agent=agent)
     await session.wait_for_complete()
 ```
 
@@ -143,7 +143,6 @@ Route between specialized agents:
 async def transfer_to_support(self, context: RunContext):
     """Transfer to technical support."""
     user_data = context.userdata
-    user_data.prev_agent = context.session.current_agent
     return user_data.agents['support'], "Transferring to support."
 ```
 

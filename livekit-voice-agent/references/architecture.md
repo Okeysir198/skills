@@ -94,7 +94,7 @@ async def entrypoint(ctx: agents.JobContext):
     )
 
     # Start the session
-    session.start(ctx.room)
+    await session.start(room=ctx.room, agent=agent)
     await session.wait_for_complete()
 ```
 

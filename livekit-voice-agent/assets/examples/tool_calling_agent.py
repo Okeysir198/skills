@@ -221,7 +221,7 @@ async def entrypoint(ctx: JobContext):
             preemptive_synthesis=True,
         )
 
-        session.start(ctx.room)
+        await session.start(room=ctx.room, agent=agent)
         await session.wait_for_complete()
 
     finally:

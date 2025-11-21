@@ -234,7 +234,7 @@ async def entrypoint(ctx: JobContext):
 
     # Start the session
     logger.info("Starting agent session")
-    session.start(ctx.room)
+    await session.start(room=ctx.room, agent=agent)
 
     # Wait for session to complete
     await session.wait_for_complete()
