@@ -25,6 +25,7 @@ export default function BasicRoom({ roomName, username }: BasicRoomProps) {
     async function fetchToken() {
       try {
         setIsLoading(true);
+        setError('');
         const response = await fetch(
           `/api/token?room=${encodeURIComponent(roomName)}&username=${encodeURIComponent(username)}`
         );
@@ -44,6 +45,9 @@ export default function BasicRoom({ roomName, username }: BasicRoomProps) {
 
     if (roomName && username) {
       fetchToken();
+    } else {
+      setIsLoading(false);
+      setError('Room name and username are required');
     }
   }, [roomName, username]);
 

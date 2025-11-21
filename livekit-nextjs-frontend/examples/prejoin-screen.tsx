@@ -239,6 +239,7 @@ export function PreJoinScreen({ roomName, onJoin }: PreJoinScreenProps) {
             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
               <button
                 onClick={() => setVideoEnabled(!videoEnabled)}
+                aria-label={videoEnabled ? 'Turn off camera' : 'Turn on camera'}
                 className={`p-3 rounded-full transition-colors ${
                   videoEnabled
                     ? 'bg-gray-700/80 hover:bg-gray-600/80'
@@ -250,6 +251,7 @@ export function PreJoinScreen({ roomName, onJoin }: PreJoinScreenProps) {
 
               <button
                 onClick={() => setAudioEnabled(!audioEnabled)}
+                aria-label={audioEnabled ? 'Mute microphone' : 'Unmute microphone'}
                 className={`p-3 rounded-full transition-colors ${
                   audioEnabled
                     ? 'bg-gray-700/80 hover:bg-gray-600/80'

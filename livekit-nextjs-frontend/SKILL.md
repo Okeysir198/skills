@@ -348,7 +348,7 @@ When reviewing LiveKit Next.js code, verify:
 - [ ] Network quality indicators shown
 - [ ] Graceful degradation on poor connections
 - [ ] Mobile responsiveness tested
-- [ ] Accessibility considerations (keyboard nav, screen readers)
+- [ ] Accessibility considerations (keyboard nav, screen readers, ARIA labels)
 
 ### Testing
 - [ ] Multiple participants tested
@@ -520,6 +520,8 @@ export async function POST(request: NextRequest) {
 3. **Selective Subscription:** Only subscribe to visible participants
 4. **Dynacast:** Automatic quality optimization based on layout
 5. **Connection Quality:** Monitor and display to users
+6. **Message History:** For chat, implement pagination or virtual scrolling for large message lists
+7. **Track Management:** Stop unused tracks immediately to conserve bandwidth
 
 ## Resources
 
