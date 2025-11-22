@@ -3,12 +3,19 @@
  *
  * Demonstrates sending and receiving data messages over LiveKit's
  * data channel for real-time chat functionality.
+ *
+ * BEST PRACTICES IMPLEMENTED:
+ * - Uses topics to differentiate message types (allows multiple data channels)
+ * - Validates message size (16KiB limit for reliable messages)
+ * - Uses reliable delivery mode for guaranteed message delivery
+ * - Implements proper error handling for send failures
+ * - Filters incoming messages by topic to avoid processing unrelated data
  */
 
 'use client';
 
 import { useRoom, useLocalParticipant } from '@livekit/components-react';
-import { DataPacket_Kind, RemoteParticipant } from 'livekit-client';
+import { RemoteParticipant } from 'livekit-client';
 import { useEffect, useState, useRef } from 'react';
 import { Send } from 'lucide-react';
 
@@ -27,6 +34,10 @@ interface ChatMessage {
   timestamp: number;
   isLocal: boolean;
 }
+
+// LiveKit recommends 16KiB limit for reliable data packets
+const MAX_MESSAGE_SIZE = 16 * 1024; // 16KB in bytes
+const CHAT_TOPIC = 'chat'; // Use topics to differentiate message types
 
 export function ChatComponent() {
   const room = useRoom();
@@ -49,24 +60,26 @@ export function ChatComponent() {
     const handleData = (
       payload: Uint8Array,
       participant?: RemoteParticipant,
-      kind?: DataPacket_Kind
+      kind?: any,
+      topic?: string
     ) => {
+      // Filter by topic to only handle chat messages
+      if (topic !== CHAT_TOPIC) return;
+
       try {
         const decoder = new TextDecoder();
         const messageData = JSON.parse(decoder.decode(payload));
 
-        if (messageData.type === 'chat') {
-          const newMessage: ChatMessage = {
-            id: `${participant?.sid || 'local'}-${Date.now()}`,
-            senderIdentity: participant?.identity || localParticipant.identity,
-            senderName: participant?.name || localParticipant.name || 'You',
-            message: messageData.message,
-            timestamp: Date.now(),
-            isLocal: !participant, // If no participant, it's our own message echoed back
-          };
+        const newMessage: ChatMessage = {
+          id: `${participant?.sid || 'local'}-${Date.now()}`,
+          senderIdentity: participant?.identity || localParticipant.identity,
+          senderName: participant?.name || localParticipant.name || 'You',
+          message: messageData.message,
+          timestamp: Date.now(),
+          isLocal: !participant, // If no participant, it's our own message echoed back
+        };
 
-          setMessages((prev) => [...prev, newMessage]);
-        }
+        setMessages((prev) => [...prev, newMessage]);
       } catch (error) {
         console.error('Error parsing chat message:', error);
       }
@@ -83,32 +96,45 @@ export function ChatComponent() {
     if (!inputValue.trim()) return;
 
     const messageData = {
-      type: 'chat',
       message: inputValue,
     };
 
     const encoder = new TextEncoder();
     const data = encoder.encode(JSON.stringify(messageData));
 
-    // Send as reliable data packet (guaranteed delivery)
-    localParticipant.publishData(
-      data,
-      DataPacket_Kind.RELIABLE,
-      { destinationSids: [] } // Empty array = broadcast to all participants
-    );
+    // Validate message size (LiveKit recommends 16KiB limit for reliable packets)
+    if (data.byteLength > MAX_MESSAGE_SIZE) {
+      console.error(`Message too large: ${data.byteLength} bytes (max: ${MAX_MESSAGE_SIZE})`);
+      alert('Message is too long. Please shorten your message.');
+      return;
+    }
 
-    // Add message to local state immediately
-    const newMessage: ChatMessage = {
-      id: `local-${Date.now()}`,
-      senderIdentity: localParticipant.identity,
-      senderName: 'You',
-      message: inputValue,
-      timestamp: Date.now(),
-      isLocal: true,
-    };
+    try {
+      // Send as reliable data packet with topic (guaranteed delivery)
+      localParticipant.publishData(
+        data,
+        {
+          reliable: true, // Use reliable delivery for chat
+          topic: CHAT_TOPIC, // Set topic to differentiate message types
+        }
+      );
 
-    setMessages((prev) => [...prev, newMessage]);
-    setInputValue('');
+      // Add message to local state immediately
+      const newMessage: ChatMessage = {
+        id: `local-${Date.now()}`,
+        senderIdentity: localParticipant.identity,
+        senderName: 'You',
+        message: inputValue,
+        timestamp: Date.now(),
+        isLocal: true,
+      };
+
+      setMessages((prev) => [...prev, newMessage]);
+      setInputValue('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message. Please try again.');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

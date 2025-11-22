@@ -12,6 +12,11 @@ This skill guides the development and review of production-grade web and mobile 
 
 LiveKit is a WebRTC-based platform for building real-time video, audio, and data applications. The official React components library (`@livekit/components-react`) provides battle-tested hooks and components for Next.js applications.
 
+**Latest Versions (as of 2025):**
+- `@livekit/components-react`: v2.9.16+
+- `livekit-client`: Latest
+- `livekit-server-sdk`: v2+ (supports Node.js, Deno, and Bun)
+
 ### Key Dependencies
 
 ```json
@@ -248,23 +253,35 @@ function RemoteParticipants() {
 
 ### 5. Data Messages
 
+**IMPORTANT:** LiveKit recommends using higher-level APIs like text streams, byte streams, or RPC for most use cases. Use the low-level `publishData` API only when you need advanced control over individual packet behavior.
+
+**Message Size Limits:**
+- **Reliable packets**: 16KiB (16,384 bytes) recommended maximum for compatibility
+- **Lossy packets**: 1,300 bytes maximum to stay within network MTU (1,400 bytes)
+- Larger messages in lossy mode get fragmented; if any fragment is lost, the entire message is lost
+
 **Sending Data:**
 ```typescript
-import { useRoom } from '@livekit/components-react';
-import { DataPacket_Kind } from 'livekit-client';
+import { useLocalParticipant } from '@livekit/components-react';
 
 function ChatComponent() {
-  const room = useRoom();
+  const { localParticipant } = useLocalParticipant();
 
   const sendMessage = (message: string) => {
     const encoder = new TextEncoder();
-    const data = encoder.encode(message);
+    const data = encoder.encode(JSON.stringify({ message }));
 
-    room.localParticipant.publishData(
-      data,
-      DataPacket_Kind.RELIABLE,
-      { destinationSids: [] } // Empty array = broadcast to all
-    );
+    // Validate size (16KiB limit for reliable messages)
+    if (data.byteLength > 16 * 1024) {
+      console.error('Message too large');
+      return;
+    }
+
+    // Use topic to differentiate message types
+    localParticipant.publishData(data, {
+      reliable: true,      // Reliable delivery with retransmission
+      topic: 'chat',       // Topic helps filter different message types
+    });
   };
 
   return (
@@ -279,7 +296,7 @@ function ChatComponent() {
 ```typescript
 import { useRoom } from '@livekit/components-react';
 import { useEffect, useState } from 'react';
-import { DataPacket_Kind, RemoteParticipant } from 'livekit-client';
+import { RemoteParticipant } from 'livekit-client';
 
 function ChatDisplay() {
   const room = useRoom();
@@ -289,11 +306,15 @@ function ChatDisplay() {
     const handleData = (
       payload: Uint8Array,
       participant?: RemoteParticipant,
-      kind?: DataPacket_Kind
+      kind?: any,
+      topic?: string
     ) => {
+      // Filter by topic
+      if (topic !== 'chat') return;
+
       const decoder = new TextDecoder();
-      const message = decoder.decode(payload);
-      setMessages(prev => [...prev, message]);
+      const data = JSON.parse(decoder.decode(payload));
+      setMessages(prev => [...prev, data.message]);
     };
 
     room.on('dataReceived', handleData);
@@ -312,6 +333,10 @@ function ChatDisplay() {
   );
 }
 ```
+
+**Delivery Modes:**
+- **Reliable** (`reliable: true`): Packets delivered in order with retransmission. Best for chat, critical updates.
+- **Lossy** (`reliable: false`): Each packet sent once, no ordering guarantee. Best for real-time updates where speed matters more than delivery.
 
 ## Code Review Checklist
 
@@ -342,7 +367,10 @@ When reviewing LiveKit Next.js code, verify:
 - [ ] Data encoding/decoding handled correctly
 - [ ] Reliable vs lossy data packets chosen appropriately
 - [ ] Message broadcasting vs targeted sending used correctly
-- [ ] Data payload size kept reasonable (<15KB recommended)
+- [ ] Data payload size validated (16KiB max for reliable, 1.3KB max for lossy)
+- [ ] Topics used to differentiate message types
+- [ ] Message size validation implemented before sending
+- [ ] Consider using higher-level APIs (text streams, RPC) instead of low-level publishData
 
 ### Performance
 - [ ] Video resolution and frame rate configured appropriately
@@ -478,10 +506,11 @@ export async function POST(request: NextRequest) {
 
 ### Connection Issues
 **Problem:** Room fails to connect
-- Verify `LIVEKIT_URL` uses `wss://` protocol
+- Verify `NEXT_PUBLIC_LIVEKIT_URL` uses `wss://` protocol (for client-side connections)
 - Check token is valid and not expired
 - Ensure API key/secret match your LiveKit instance
 - Verify network allows WebRTC connections (firewall/corporate proxy)
+- Check browser console for specific error messages
 
 ### Track Issues
 **Problem:** Camera/microphone not working
@@ -500,9 +529,12 @@ export async function POST(request: NextRequest) {
 ### Data Message Issues
 **Problem:** Data messages not received
 - Verify `canPublishData` permission in token
-- Check data payload size (<15KB)
-- Use reliable delivery for critical messages
-- Ensure proper encoding/decoding
+- Check data payload size (max 16KiB for reliable, 1.3KB for lossy)
+- Use reliable delivery for critical messages (chat, important updates)
+- Use lossy delivery for real-time updates where speed matters (cursor position, state updates)
+- Ensure proper encoding/decoding (TextEncoder/TextDecoder)
+- Verify topic matches between sender and receiver
+- Check browser console for errors
 
 ## Mobile Considerations
 
