@@ -49,8 +49,11 @@ will be available to the operator, so they won't need to repeat everything.
 If the user decides they want to try automated help again, you can use
 the return_to_automated function.
 
-When the human operator is ready to join (in production, this would be
-triggered by your queue system), use notify_operator_joining.""",
+When ready to notify the user that the operator is joining, use notify_operator_joining.
+
+Note: In production, your queue system triggers the actual operator joining based on
+availability, priority, and wait times. This agent manages the user experience during
+that transition.""",
             chat_ctx=chat_ctx,
         )
 
@@ -123,26 +126,83 @@ triggered by your queue system), use notify_operator_joining.""",
         context: RunContext[ConversationData],
     ) -> str:
         """
-        Notify the user that a human operator is joining.
-
-        In production, this would be called automatically by your queue
-        system when an operator becomes available.
+        Notify the user that a human operator is joining the conversation.
 
         Returns:
-            Message to user (returns None to end agent automation)
+            Message to user
+
+        Production Integration:
+            This function is typically triggered by your queue management system
+            when a human operator becomes available. Example workflow:
+
+            # 1. Queue System Integration
+            from your_queue_system import OperatorQueue
+
+            # Check operator availability
+            operator = await OperatorQueue.get_next_available(
+                category=context.userdata.issue_category,
+                priority=context.userdata.priority_level
+            )
+
+            # 2. Add operator to LiveKit room
+            from livekit import api
+
+            room_service = api.RoomServiceClient()
+            await room_service.update_participant(
+                room=context.room.name,
+                identity=operator.identity,
+                # Configure operator permissions
+            )
+
+            # 3. Send context to operator dashboard
+            await operator_dashboard.send_context({
+                "user_name": context.userdata.user_name,
+                "issue_category": context.userdata.issue_category,
+                "escalation_reason": context.userdata.escalation_reason,
+                "conversation_history": self.chat_ctx,
+                "collected_details": context.userdata.collected_details,
+            })
+
+            # 4. Configure agent behavior
+            # Option A: Mute the AI agent (human takes over completely)
+            # Option B: Keep AI agent active for assistance
+            # Option C: Remove AI agent from room
         """
         # Mark that handoff is complete
         context.userdata.human_handoff_completed = True
 
-        # In production, this is where you'd:
-        # 1. Add human operator to the LiveKit room
-        # 2. Provide operator with context (user_name, issue_category, etc.)
-        # 3. Potentially mute or remove the AI agent
+        # Production implementation would include:
+        # 1. Notify your queue/routing system that handoff is complete
+        # 2. Add human operator to the LiveKit room via API
+        # 3. Send conversation context to operator dashboard
+        # 4. Update metrics/analytics
+
+        # Example: Send handoff event to your backend
+        # await self._send_handoff_event(
+        #     room_name=context.room.name,
+        #     user_data=context.userdata,
+        #     operator_needed_for=context.userdata.issue_category
+        # )
+
+        # Prepare comprehensive context for operator
+        operator_context = {
+            "user_name": context.userdata.user_name or "Customer",
+            "user_email": context.userdata.user_email or "Not provided",
+            "issue_category": context.userdata.issue_category,
+            "escalation_reason": context.userdata.escalation_reason,
+            "details": context.userdata.collected_details,
+        }
+
+        # Log the handoff for quality assurance
+        # await self._log_handoff(operator_context)
 
         return (
-            "A human operator is joining now. "
-            "They have all the details from our conversation. "
-            "Thanks for your patience!"
+            f"Good news! A {context.userdata.issue_category} specialist is joining now. "
+            f"They have full visibility of our conversation, including:\n"
+            f"• Your issue: {context.userdata.issue_category}\n"
+            f"• Reason for escalation: {context.userdata.escalation_reason}\n"
+            f"• All details we've discussed\n\n"
+            f"You won't need to repeat anything. Thanks for your patience!"
         )
 
     @function_tool

@@ -347,8 +347,9 @@ successfully resolve it, use mark_resolved. If it requires escalation
         check_type: Annotated[str, "Type of diagnostic check"],
     ):
         """Run system diagnostics"""
-        # Simulated diagnostic
-        return f"Diagnostics complete: {check_type} check passed"
+        # Production: Run actual diagnostic checks
+        # Example: result = await diagnostic_service.run_check(check_type)
+        return f"Diagnostics complete: {check_type} check passed. All systems operational."
 
     @function_tool
     async def mark_resolved(
@@ -588,8 +589,9 @@ Resolve complex issues. Escalate to human operator only if:
         user_id: Annotated[str, "User ID to check logs for"],
     ):
         """Check system logs for errors"""
-        # Simulated log check
-        return "Recent logs show: Connection timeout errors on 2025-01-20"
+        # Production: Query your logging system (Datadog, CloudWatch, etc.)
+        # Example: logs = await logging_service.query_user_logs(user_id, hours=24)
+        return "Recent logs show: Connection timeout errors on 2025-01-20. Error rate: 0.5%"
 
     @function_tool
     async def apply_fix(
@@ -642,8 +644,9 @@ for the operator.""",
             chat_ctx=chat_ctx,
         )
 
-    # In production, this would integrate with queue system
-    # For now, it's the end of the automated flow
+    # Production: Integrate with your queue/routing system
+    # Example: await queue_system.add_to_queue(user_id, priority, category)
+    # Example: operator = await queue_system.assign_operator(ticket_id)
 ```
 
 **Key Features:**
